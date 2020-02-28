@@ -3,8 +3,22 @@
 <keywords>
 HTTPS
 HTTP GET
+PEM certificate
 </keywords>
-</info>
+</info>type
+
+#
+# Server-side
+<reply>
+<data>
+HTTP/1.1 200 OK
+Date: Thu, 09 Nov 2010 14:49:00 GMT
+Server: test-server/fake
+Content-Length: 7
+
+MooMoo
+</data>
+</reply>
 
 #
 # Client-side
@@ -13,21 +27,35 @@ HTTP GET
 WinSSL
 </features>
 <server>
-none
+https Server-localhost-sv.pem
 </server>
  <name>
 Ignore certificate revocation check offline erros
  </name>
+  <setenv>
+# This test is pointless if we're not using the schannel backend
+CURL_SSL_BACKEND=schannel
+ </setenv>
  <command>
---proxy 165.225.80.36:443 --ssl-revoke-best-effort -I https://yandex.com
+--cacert %SRCDIR/certs/EdelCurlRoot-ca.crt --ssl-best-effort-revoke https://localhost:%HTTPSPORT/2070
 </command>
+# Ensure that we're running on localhost because we're checking the host name
+<precheck>
+perl -e "print 'Test requires default test server host' if ( '%HOSTIP' ne '127.0.0.1' );"
+</precheck>
 </client>
 
 #
 # Verify data after the test has been "shot"
 <verify>
-<errorcode>
-0
-</errorcode>
+<strip>
+^User-Agent:.*
+</strip>
+<protocol>
+GET /2070 HTTP/1.1
+Host: localhost:%HTTPSPORT
+Accept: */*
+
+</protocol>
 </verify>
 </testcase>
